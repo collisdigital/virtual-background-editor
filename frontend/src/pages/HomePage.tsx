@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import ImageSelector from '../components/ImageSelector';
 import PreviewCanvas from '../components/PreviewCanvas';
 import TextInput from '../components/TextInput';
