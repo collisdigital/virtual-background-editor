@@ -49,11 +49,15 @@ export const useImageProcessor = (
       // We can attach the original placeholder config to the object itself!
       const placeholder = (obj as any)._placeholder;
       if (placeholder) {
+        // Reset scale to 1 and calculate properties directly for the current canvas scale
+        // This ensures wrapping (width) and font size behave consistently without transform artifacts
         obj.set({
           left: imgLeft + placeholder.x * scale,
           top: imgTop + placeholder.y * scale,
-          scaleX: scale,
-          scaleY: scale,
+          width: placeholder.width * scale,
+          fontSize: placeholder.fontSize * scale,
+          scaleX: 1,
+          scaleY: 1,
         });
         obj.setCoords();
       }

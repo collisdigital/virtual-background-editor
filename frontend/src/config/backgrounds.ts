@@ -24,9 +24,9 @@ export const backgrounds: BackgroundImage[] = [
     placeholders: [
       {
         id: 'name',
-        x: 275,
-        y: 130,
-        width: 400,
+        x: 744,
+        y: 440,
+        width: 1800,
         font: 'Arial',
         fontSize: 48,
         fill: '#ffffff',
@@ -34,9 +34,9 @@ export const backgrounds: BackgroundImage[] = [
       },
       {
         id: 'title',
-        x: 275,
-        y: 190,
-        width: 400,
+        x: 744,
+        y: 599,
+        width: 2000,
         font: 'Arial',
         fontSize: 32,
         fill: '#ffffff',
