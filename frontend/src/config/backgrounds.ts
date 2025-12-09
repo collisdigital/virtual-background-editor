@@ -20,7 +20,7 @@ export const backgrounds: BackgroundImage[] = [
   {
     id: '1',
     name: 'Default Background',
-    src: '/images/backgrounds/default.svg',
+    src: '/images/backgrounds/DHCWTeamsBackground-2024-Dark.png',
     placeholders: [
       {
         id: 'name',

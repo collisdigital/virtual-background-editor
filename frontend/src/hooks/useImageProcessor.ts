@@ -14,14 +14,37 @@ export const useImageProcessor = (
   useEffect(() => {
     if (canvasRef.current) {
       fabricCanvas.current = new fabric.Canvas(canvasRef.current, {
-        width: 1920,
-        height: 1080,
+        width: canvasRef.current.clientWidth,
+        height: canvasRef.current.clientHeight,
       });
-    }
 
-    return () => {
-      fabricCanvas.current?.dispose();
-    };
+      const resizeObserver = new ResizeObserver(() => {
+        if (fabricCanvas.current && canvasRef.current) {
+          fabricCanvas.current.setDimensions({
+            width: canvasRef.current.clientWidth,
+            height: canvasRef.current.clientHeight,
+          });
+          if (fabricCanvas.current.backgroundImage) {
+            const img = fabricCanvas.current.backgroundImage;
+            const canvas = fabricCanvas.current;
+            const scaleX = (canvas.width ?? 0) / (img.width ?? 1);
+            const scaleY = (canvas.height ?? 0) / (img.height ?? 1);
+            img.set({
+              scaleX: scaleX,
+              scaleY: scaleY,
+            });
+          }
+          fabricCanvas.current.renderAll();
+        }
+      });
+
+      resizeObserver.observe(canvasRef.current);
+
+      return () => {
+        fabricCanvas.current?.dispose();
+        resizeObserver.disconnect();
+      };
+    }
   }, [canvasRef]);
 
   const updateText = (id: string, text: string) => {
@@ -33,7 +56,7 @@ export const useImageProcessor = (
     // Remove existing text object if it exists
     const existingObject = fabricCanvas.current
       .getObjects()
-      .find((obj) => (obj as any).name === id); // cast to any to access name if needed or check type
+      .find((obj) => (obj as fabric.Object & { name?: string }).name === id);
     if (existingObject) {
       fabricCanvas.current.remove(existingObject);
     }

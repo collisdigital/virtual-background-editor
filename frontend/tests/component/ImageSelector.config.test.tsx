@@ -12,7 +12,7 @@ describe('ImageSelector - Configuration Loading', () => {
 
     expect(backgrounds.length).toBeGreaterThan(0); // Ensure there are backgrounds configured
 
-    render(<ImageSelector backgrounds={backgrounds} onSelect={() => {}} />);
+    render(<ImageSelector backgrounds={backgrounds} onSelect={() => undefined} />);
 
     // Verify that images are rendered based on the configuration
     backgrounds.forEach((bg) => {

@@ -26,8 +26,8 @@ const HomePage = () => {
       <header className="py-4">
         <h1 className="text-2xl md:text-4xl font-bold">Virtual Background Editor</h1>
       </header>
-      <main className="flex flex-col md:flex-row gap-4 md:gap-8 p-4 md:p-8 w-full max-w-7xl">
-        <div className="w-full md:w-1/3">
+      <main className="flex flex-col md:flex-row gap-4 md:gap-8 p-4 md:p-8 w-full">
+        <div className="w-full md:w-1/4">
           <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
             <h2 className="text-2xl font-semibold mb-4">Controls</h2>
             {imageLoadingError && (
@@ -48,7 +48,7 @@ const HomePage = () => {
             </button>
           </div>
         </div>
-        <div className="w-full md:w-2/3">
+        <div className="w-full md:w-3/4">
           <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
             <h2 className="text-2xl font-semibold mb-4">Preview</h2>
             <PreviewCanvas ref={canvasRef} />

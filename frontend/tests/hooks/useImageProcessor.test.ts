@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { useImageProcessor } from '../../src/hooks/useImageProcessor';
-import * as fabric from 'fabric';
 
 // Mocking fabric.js
 vi.mock('fabric', () => {
