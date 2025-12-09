@@ -107,9 +107,9 @@ export const backgrounds: BackgroundImage[] = [
     placeholders: [
       {
         id: 'name',
-        x: 744,
-        y: 430,
-        width: 1800,
+        x: 3000,
+        y: 1180,
+        width: 900,
         font: 'Sans-serif',
         fontSize: 90,
         fill: '#ffffff',
@@ -117,9 +117,9 @@ export const backgrounds: BackgroundImage[] = [
       },
       {
         id: 'title',
-        x: 744,
-        y: 585,
-        width: 2000,
+        x: 3000,
+        y: 1300,
+        width: 900,
         font: 'Sans-serif',
         fontSize: 50,
         fill: '#ffffff',
@@ -134,9 +134,9 @@ export const backgrounds: BackgroundImage[] = [
     placeholders: [
       {
         id: 'name',
-        x: 744,
-        y: 430,
-        width: 1800,
+        x: 3000,
+        y: 1480,
+        width: 900,
         font: 'Sans-serif',
         fontSize: 90,
         fill: '#ffffff',
@@ -144,9 +144,9 @@ export const backgrounds: BackgroundImage[] = [
       },
       {
         id: 'title',
-        x: 744,
-        y: 585,
-        width: 2000,
+        x: 3000,
+        y: 1600,
+        width: 900,
         font: 'Sans-serif',
         fontSize: 50,
         fill: '#ffffff',
@@ -161,9 +161,9 @@ export const backgrounds: BackgroundImage[] = [
     placeholders: [
       {
         id: 'name',
-        x: 744,
-        y: 430,
-        width: 1800,
+        x: 3000,
+        y: 1480,
+        width: 900,
         font: 'Sans-serif',
         fontSize: 90,
         fill: '#ffffff',
@@ -171,9 +171,9 @@ export const backgrounds: BackgroundImage[] = [
       },
       {
         id: 'title',
-        x: 744,
-        y: 585,
-        width: 2000,
+        x: 3000,
+        y: 1600,
+        width: 900,
         font: 'Sans-serif',
         fontSize: 50,
         fill: '#ffffff',
