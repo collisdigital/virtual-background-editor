@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import ImageSelector from '../components/ImageSelector';
 import PreviewCanvas from '../components/PreviewCanvas';
 import TextInput from '../components/TextInput';
@@ -10,6 +10,13 @@ const HomePage = () => {
   const [jobTitle, setJobTitle] = useState('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { selectImage, updateText, downloadImage, imageLoadingError } = useImageProcessor(canvasRef);
+
+  const backgroundsWithBaseUrl = useMemo(() => {
+    return backgrounds.map((bg) => ({
+      ...bg,
+      src: `${import.meta.env.BASE_URL}${bg.src.startsWith('/') ? bg.src.slice(1) : bg.src}`,
+    }));
+  }, []);
 
   const handleNameChange = (value: string) => {
     setName(value);
@@ -31,7 +38,7 @@ const HomePage = () => {
               <p className="text-red-500 text-sm mb-2">{imageLoadingError}</p>
             )}
             <ImageSelector 
-              backgrounds={backgrounds} 
+              backgrounds={backgroundsWithBaseUrl} 
               onSelect={(bg) => selectImage(bg, { name, title: jobTitle })} 
             />
             <div className="space-y-4">

@@ -22,7 +22,7 @@ export const backgrounds: BackgroundImage[] = [
   {
     id: '1',
     name: 'Normal Dark 2024',
-    src: `${import.meta.env.BASE_URL}images/backgrounds/DHCWTeamsBackground-2024-Dark.png`,
+    src: '/images/backgrounds/DHCWTeamsBackground-2024-Dark.png',
     placeholders: [
       {
         id: 'name',
@@ -49,7 +49,7 @@ export const backgrounds: BackgroundImage[] = [
   {
     id: '2',
     name: 'Christmas 2024',
-    src: `${import.meta.env.BASE_URL}images/backgrounds/DHCWTeamsBackground-Christmas2024_3.png`,
+    src: '/images/backgrounds/DHCWTeamsBackground-Christmas2024_3.png',
     placeholders: [
       {
         id: 'name',
@@ -76,7 +76,7 @@ export const backgrounds: BackgroundImage[] = [
   {
     id: '3',
     name: 'Pride 2024',
-    src: `${import.meta.env.BASE_URL}images/backgrounds/TeamsBackground-PRIDE2024.png`,
+    src: '/images/backgrounds/TeamsBackground-PRIDE2024.png',
     placeholders: [
       {
         id: 'name',
