@@ -74,11 +74,12 @@ export const useImageProcessor = (
           requestAnimationFrame(() => {
             if (!fabricCanvas.current || !canvasRef.current) return;
 
-            const parent = canvasRef.current.parentElement;
-            if (!parent) return;
+            // Find the responsive container by ID
+            const container = document.getElementById('preview-container');
+            if (!container) return;
 
-            const width = parent.clientWidth;
-            const height = parent.clientHeight;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
 
             fabricCanvas.current.setDimensions({
               width: width,
@@ -90,7 +91,14 @@ export const useImageProcessor = (
         }
       });
 
-      resizeObserver.observe(canvasRef.current.parentElement || canvasRef.current);
+      // Observe the responsive container
+      const container = document.getElementById('preview-container');
+      if (container) {
+        resizeObserver.observe(container);
+      } else {
+        // Fallback if ID isn't found immediately (though it should be)
+        resizeObserver.observe(canvasRef.current.parentElement || canvasRef.current);
+      }
 
       return () => {
         fabricCanvas.current?.dispose();
