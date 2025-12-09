@@ -149,7 +149,7 @@ export const useImageProcessor = (
     updateLayout();
   };
 
-  const selectImage = async (image: BackgroundImage) => {
+  const selectImage = async (image: BackgroundImage, textValues: Record<string, string> = {}) => {
     setSelectedImage(image);
     setImageLoadingError(null);
     if (!fabricCanvas.current) return;
@@ -166,6 +166,28 @@ export const useImageProcessor = (
       
       canvas.backgroundImage = img;
       
+      updateLayout();
+
+      // Re-add text objects if values are provided
+      Object.entries(textValues).forEach(([id, text]) => {
+        // We need to use the NEW selectedImage context, but state update is async.
+        // So we must rely on the 'image' argument passed to this function, not 'selectedImage' state.
+        const placeholder = image.placeholders.find((p) => p.id === id);
+        if (!placeholder) return;
+
+        const textObject = new fabric.Textbox(text, {
+          fontFamily: placeholder.font,
+          fontSize: placeholder.fontSize,
+          fill: placeholder.fill,
+          textAlign: placeholder.textAlign,
+          name: id,
+        });
+        
+        (textObject as any)._placeholder = placeholder;
+        canvas.add(textObject);
+      });
+
+      // Layout again to position new text objects correctly
       updateLayout();
       
     } catch (error) {

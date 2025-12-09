@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ImageSelector from '../components/ImageSelector';
 import PreviewCanvas from '../components/PreviewCanvas';
 import TextInput from '../components/TextInput';
@@ -11,6 +11,10 @@ const HomePage = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { selectImage, updateText, downloadImage, imageLoadingError } = useImageProcessor(canvasRef);
 
+  useEffect(() => {
+    document.title = 'Virtual Background Editor';
+  }, []);
+
   const handleNameChange = (value: string) => {
     setName(value);
     updateText('name', value);
@@ -22,18 +26,18 @@ const HomePage = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
-      <header className="py-4">
-        <h1 className="text-2xl md:text-4xl font-bold">Virtual Background Editor</h1>
-      </header>
-      <main className="flex flex-col-reverse md:flex-row gap-4 md:gap-8 p-4 md:p-8 w-full max-w-7xl mx-auto">
+    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+      <main className="flex flex-col-reverse md:flex-row gap-4 md:gap-8 p-1 md:p-2 w-full max-w-7xl mx-auto flex-grow">
         <div className="w-full md:w-1/3 lg:w-1/4">
           <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md space-y-4">
             <h2 className="text-xl font-semibold mb-4">Controls</h2>
             {imageLoadingError && (
               <p className="text-red-500 text-sm mb-2">{imageLoadingError}</p>
             )}
-            <ImageSelector backgrounds={backgrounds} onSelect={selectImage} />
+            <ImageSelector 
+              backgrounds={backgrounds} 
+              onSelect={(bg) => selectImage(bg, { name, title: jobTitle })} 
+            />
             <div className="space-y-4">
               <TextInput label="Name" value={name} onChange={handleNameChange} />
               <TextInput
