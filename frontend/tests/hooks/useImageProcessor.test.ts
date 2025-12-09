@@ -18,6 +18,8 @@ const {
   mockGetObjects: vi.fn().mockReturnValue([]),
 }));
 
+
+
 vi.mock('fabric', () => {
   return {
     Canvas: class {
@@ -41,18 +43,31 @@ vi.mock('fabric', () => {
       }),
     },
     Textbox: class {
-      constructor(text: string, options: any) {
-        (this as any).text = text;
+      constructor(text: string, options: fabric.ITextboxOptions) {
+        (this as fabric.Textbox).text = text;
         Object.assign(this, options);
       }
       set = mockSet;
       setCoords = vi.fn();
     },
+    StaticCanvas: class {
+      constructor(el: HTMLCanvasElement | null, options: fabric.ICanvasOptions) {
+        Object.assign(this, options);
+      }
+      dispose = vi.fn();
+      setBackgroundImage = vi.fn();
+      getObjects = mockGetObjects; // Re-use the same mock for objects
+      add = mockCanvasAdd; // Re-use the same mock for adding objects
+      renderAll = mockCanvasRenderAll; // Re-use renderAll
+      toDataURL = vi.fn().mockReturnValue('data:image/png;base64,mocked_image_data');
+      width = 2000; // Mock full resolution width
+      height = 1000; // Mock full resolution height
+    },
   };
 });
 
 describe('useImageProcessor', () => {
-  it('should trigger a download when downloadImage is called', () => {
+  it('should trigger a download when downloadImage is called', async () => {
     const canvasEl = document.createElement('canvas');
     const canvasRef = {
       current: canvasEl,
@@ -64,7 +79,23 @@ describe('useImageProcessor', () => {
 
     const { result } = renderHook(() => useImageProcessor(canvasRef));
 
-    result.current.downloadImage();
+    // Simulate image selection to set selectedImage state
+    const mockImageConfig = {
+      id: '1',
+      name: 'Test BG',
+      src: 'test.png',
+      placeholders: [],
+      originalWidth: 2000,
+      originalHeight: 1000,
+    };
+    await act(async () => {
+      await result.current.selectImage(mockImageConfig);
+    });
+
+    // Now call downloadImage and await it
+    await act(async () => {
+      await result.current.downloadImage();
+    });
 
     expect(createElementSpy).toHaveBeenCalledWith('a');
     expect(linkMock.download).toBe('virtual-background.png');

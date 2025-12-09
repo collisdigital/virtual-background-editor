@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import * as fabric from 'fabric';
-import { BackgroundImage } from '../config/backgrounds';
+import { BackgroundImage, Placeholder } from '../config/backgrounds';
+
+interface FabricObjectWithPlaceholder extends fabric.Object {
+  _placeholder?: Placeholder;
+}
 
 export const useImageProcessor = (
   canvasRef: React.RefObject<HTMLCanvasElement | null>
@@ -9,10 +13,11 @@ export const useImageProcessor = (
   const [selectedImage, setSelectedImage] = useState<BackgroundImage | null>(
     null
   );
+  const [originalImageDimensions, setOriginalImageDimensions] = useState<{ width: number; height: number } | null>(null);
   const [imageLoadingError, setImageLoadingError] = useState<string | null>(null);
 
   const updateLayout = useCallback(() => {
-    if (!fabricCanvas.current || !fabricCanvas.current.backgroundImage) return;
+    if (!fabricCanvas.current?.backgroundImage) return;
 
     const canvas = fabricCanvas.current;
     const bgImage = canvas.backgroundImage as fabric.FabricImage;
@@ -47,7 +52,7 @@ export const useImageProcessor = (
       // Actually we need to access the current selectedImage state. 
       // But we can't easily access state inside this callback if it's stale.
       // We can attach the original placeholder config to the object itself!
-      const placeholder = (obj as any)._placeholder;
+      const placeholder = (obj as FabricObjectWithPlaceholder)._placeholder;
       if (placeholder) {
         // Reset scale to 1 and calculate properties directly for the current canvas scale
         // This ensures wrapping (width) and font size behave consistently without transform artifacts
@@ -101,7 +106,7 @@ export const useImageProcessor = (
         resizeObserver.observe(container);
       } else {
         // Fallback if ID isn't found immediately (though it should be)
-        resizeObserver.observe(canvasRef.current.parentElement || canvasRef.current);
+        resizeObserver.observe(canvasRef.current.parentElement ?? canvasRef.current);
       }
 
       return () => {
@@ -141,7 +146,7 @@ export const useImageProcessor = (
     });
     
     // Attach placeholder config to the object for future updates
-    (textObject as any)._placeholder = placeholder;
+    (textObject as FabricObjectWithPlaceholder)._placeholder = placeholder;
 
     canvas.add(textObject);
     
@@ -150,12 +155,11 @@ export const useImageProcessor = (
   };
 
   const selectImage = async (image: BackgroundImage, textValues: Record<string, string> = {}) => {
-    setSelectedImage(image);
-    setImageLoadingError(null);
-    if (!fabricCanvas.current) return;
+                      setSelectedImage(image);    if (!fabricCanvas.current) return;
 
     try {
       // Clear existing objects (text) when changing background
+      setImageLoadingError(null);
       fabricCanvas.current.clear();
       
       const img = await fabric.FabricImage.fromURL(image.src, { crossOrigin: 'anonymous' });
@@ -165,6 +169,9 @@ export const useImageProcessor = (
       const canvas = fabricCanvas.current;
       
       canvas.backgroundImage = img;
+
+      setOriginalImageDimensions({ width: img.width, height: img.height });
+      setSelectedImage(image);
       
       updateLayout();
 
@@ -183,7 +190,7 @@ export const useImageProcessor = (
           name: id,
         });
         
-        (textObject as any)._placeholder = placeholder;
+        (textObject as FabricObjectWithPlaceholder)._placeholder = placeholder;
         canvas.add(textObject);
       });
 
@@ -196,13 +203,60 @@ export const useImageProcessor = (
     }
   };
 
-  const downloadImage = () => {
-    if (canvasRef.current) {
-      const dataURL = canvasRef.current.toDataURL('image/png');
+  const downloadImage = async () => {
+    if (!selectedImage || !originalImageDimensions || !fabricCanvas.current) {
+      console.error('No image selected or original dimensions not available for download.');
+      return;
+    }
+
+    // Create a temporary static canvas with original image dimensions
+    const tempCanvas = new fabric.StaticCanvas(null, {
+      width: originalImageDimensions.width,
+      height: originalImageDimensions.height,
+      renderOnAddRemove: false, // Optimize for static rendering
+    });
+
+    try {
+      // Load the background image onto the temporary canvas
+      const originalImg = await fabric.FabricImage.fromURL(selectedImage.src, { crossOrigin: 'anonymous' });
+      tempCanvas.backgroundImage = originalImg;
+
+      // Add all text objects from the interactive canvas to the temporary canvas
+      fabricCanvas.current.getObjects().forEach((obj) => {
+        const placeholder = (obj as FabricObjectWithPlaceholder)._placeholder;
+        if (placeholder) {
+          const textObject = new fabric.Textbox((obj as fabric.Textbox).text ?? '', {
+            fontFamily: placeholder.font,
+            fontSize: placeholder.fontSize,
+            fill: placeholder.fill,
+            textAlign: placeholder.textAlign,
+            left: placeholder.x,
+            top: placeholder.y,
+            width: placeholder.width,
+            originX: 'left',
+            originY: 'top',
+          });
+          tempCanvas.add(textObject);
+        }
+      });
+      
+      // Render all objects on the temporary canvas
+      tempCanvas.renderAll();
+
+      // Generate data URL and trigger download
+      const dataURL = tempCanvas.toDataURL({
+        format: 'png',
+        quality: 1, // Max quality
+      });
       const link = document.createElement('a');
       link.href = dataURL;
       link.download = 'virtual-background.png';
       link.click();
+    } catch (error) {
+      console.error('Error generating image for download:', error);
+    } finally {
+      // Dispose the temporary canvas to free up memory
+      tempCanvas.dispose();
     }
   };
 

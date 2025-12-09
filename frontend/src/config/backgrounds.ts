@@ -14,6 +14,8 @@ export interface BackgroundImage {
   name: string;
   src: string;
   placeholders: Placeholder[];
+  originalWidth?: number;
+  originalHeight?: number;
 }
 
 export const backgrounds: BackgroundImage[] = [
@@ -25,7 +27,7 @@ export const backgrounds: BackgroundImage[] = [
       {
         id: 'name',
         x: 744,
-        y: 440,
+        y: 430,
         width: 1800,
         font: 'Sans-serif',
         fontSize: 90,
@@ -35,7 +37,7 @@ export const backgrounds: BackgroundImage[] = [
       {
         id: 'title',
         x: 744,
-        y: 599,
+        y: 585,
         width: 2000,
         font: 'Sans-serif',
         fontSize: 50,
@@ -51,20 +53,20 @@ export const backgrounds: BackgroundImage[] = [
     placeholders: [
       {
         id: 'name',
-        x: 260,
-        y: 35,
-        width: 400,
-        font: 'Arial',
+        x: 744,
+        y: 160,
+        width: 2000,
+        font: 'Sans-serif',
         fontSize: 90,
         fill: '#ffffff',
         textAlign: 'left',
       },
       {
         id: 'title',
-        x: 260,
-        y: 100,
-        width: 400,
-        font: 'Arial',
+        x: 744,
+        y: 300,
+        width: 2000,
+        font: 'Sans-serif',
         fontSize: 50,
         fill: '#ffffff',
         textAlign: 'left',
@@ -78,9 +80,9 @@ export const backgrounds: BackgroundImage[] = [
     placeholders: [
       {
         id: 'name',
-        x: 400,
-        y: 130,
-        width: 400,
+        x: 1050,
+        y: 430,
+        width: 2000,
         font: 'Arial',
         fontSize: 90,
         fill: '#ffffff',
@@ -88,9 +90,9 @@ export const backgrounds: BackgroundImage[] = [
       },
       {
         id: 'title',
-        x: 400,
-        y: 190,
-        width: 400,
+        x: 1050,
+        y: 585,
+        width: 2000,
         font: 'Arial',
         fontSize: 50,
         fill: '#ffffff',
