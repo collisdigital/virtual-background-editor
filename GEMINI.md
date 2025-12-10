@@ -1,33 +1,60 @@
 # background-name-title-editor Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2025-12-08
+Last updated: 2025-12-10
 
 ## Active Technologies
-- TypeScript 5.x + React 18 (using Vite) + Tailwind CSS 3.x, Fabric.js 5.x (for canvas) (002-improve-ui-ux)
-- N/A (Client-side only) (002-improve-ui-ux)
-
-- TypeScript 5.x + React 18 (using Vite), Fabric.js 5.x, Tailwind CSS 3.x (001-virtual-bg-editor)
+- **Core:** TypeScript 5.x, React 18 (Vite), Tailwind CSS 3.x
+- **Graphics:** Fabric.js 5.x (Canvas manipulation)
+- **Testing:** Vitest (Unit/Component), Playwright (E2E)
+- **Storage:** Client-side only (no backend)
 
 ## Project Structure
 
 ```text
-src/
-tests/
+frontend/
+├── src/
+│   ├── components/      # UI Components (ImageSelector, PreviewCanvas, Inputs)
+│   ├── config/          # Configuration files (backgrounds.ts - single source of truth)
+│   ├── hooks/           # Custom hooks (useImageProcessor.ts - core canvas logic)
+│   ├── pages/           # Page layouts (HomePage.tsx)
+│   └── test/            # Test setup (setup.ts)
+└── tests/
+    ├── component/       # Unit/Component tests (Vitest)
+    ├── e2e/             # End-to-End tests (Playwright)
+    │   └── utils/       # E2E helpers (canvas-helper.ts)
+    └── hooks/           # Hook tests
 ```
 
 ## Commands
 
-npm test && npm run lint
+- **Development:** `cd frontend && npm run dev`
+- **Unit Tests:** `cd frontend && npm test`
+- **E2E Tests:** `cd frontend && npx playwright test`
+- **Linting:** `cd frontend && npm run lint`
 
 ## Code Style
 
-TypeScript 5.x: Follow standard conventions
+- **TypeScript:** Follow standard conventions.
+- **Styling:** Use Tailwind CSS utility classes.
+- **State:** Local React state for UI; Fabric.js for canvas state.
 
-## Recent Changes
-- 002-improve-ui-ux: Added TypeScript 5.x + React 18 (using Vite) + Tailwind CSS 3.x, Fabric.js 5.x (for canvas)
-- 002-improve-ui-ux: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+## Key Concepts & Architecture
 
-- 001-virtual-bg-editor: Added TypeScript 5.x + React 18 (using Vite), Fabric.js 5.x, Tailwind CSS 3.x
+### 1. Canvas Management (`useImageProcessor`)
+The core logic resides in `frontend/src/hooks/useImageProcessor.ts`. This hook:
+- Initializes the Fabric.js canvas.
+- Manages the `ResizeObserver` for responsive scaling.
+- Handles adding/removing/updating objects (background images, text placeholders, logos) based on the selected configuration.
+- **Testing Hook:** Exposes the `fabric.Canvas` instance as `(element).__fabric` to the DOM node to allow E2E tests to inspect canvas objects directly.
 
-<!-- MANUAL ADDITIONS START -->
-<!-- MANUAL ADDITIONS END -->
+### 2. Background Configuration (`backgrounds.ts`)
+`frontend/src/config/backgrounds.ts` is the central configuration file. It exports:
+- `backgrounds`: An array of `BackgroundImage` objects.
+- **Constants:** Defaults for text styling (`DEFAULT_FONT_FAMILY`, `DEFAULT_TEXT_FILL`, etc.) and positioning.
+- **Interfaces:** `LogoConfig`, `Placeholder`, `BackgroundImage`.
+- **Refactoring Note:** Configuration objects must explicitly define all properties (e.g., `font`, `fontSize`) using the imported constants to ensure predictable rendering without hardcoded fallbacks in the hook logic.
+
+### 3. Testing Strategy
+- **Unit/Component:** Mocks `fabric` to test logic without a real browser environment.
+- **E2E (Playwright):** Uses `frontend/tests/e2e/utils/canvas-helper.ts` to execute code in the browser context, accessing the exposed `__fabric` instance to verify that specific objects (by `name` property) exist on the canvas and have correct properties (text, visibility).
+
