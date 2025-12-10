@@ -1,11 +1,16 @@
 import { test, expect } from '@playwright/test';
-import { getCanvasObject } from './utils/canvas-helper';
+import { getCanvasObject, hasBackgroundImage } from './utils/canvas-helper';
+
+test.beforeEach(async ({ page }) => {
+  await page.goto('/');
+});
 
 test('select an image and enter text', async ({ page }) => {
-  await page.goto('/');
+  // Select the first image using data-testid
+  await page.getByTestId('bg-select-1').click();
 
-  // Select the first image
-  await page.getByRole('button', { name: /Select .* as background/ }).first().click();
+  // Verify background is loaded
+  await expect.poll(async () => await hasBackgroundImage(page)).toBe(true);
 
   // Enter name and job title
   await page.getByLabel('Name').fill('John Doe');

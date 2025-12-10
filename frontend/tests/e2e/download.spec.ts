@@ -1,10 +1,12 @@
 import { test, expect } from '@playwright/test';
 
-test('download a customized image', async ({ page }) => {
+test.beforeEach(async ({ page }) => {
   await page.goto('/');
+});
 
+test('download a customized image', async ({ page }) => {
   // Select the first image
-  await page.getByRole('button', { name: /Select .* as background/ }).first().click();
+  await page.getByTestId('bg-select-1').click();
 
   // Enter name and job title
   await page.getByLabel('Name').fill('Jane Doe');

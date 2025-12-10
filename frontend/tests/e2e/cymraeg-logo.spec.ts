@@ -1,9 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { getCanvasObject } from './utils/canvas-helper';
 
-test('User can select Cymraeg status and canvas remains visible', async ({ page }) => {
+test.beforeEach(async ({ page }) => {
   await page.goto('/');
+});
 
+test('User can select Cymraeg status and canvas remains visible', async ({ page }) => {
   // Check if Cymraeg dropdown exists and defaults to 'None'
   const cymraegSelect = page.getByLabel('Cymraeg');
   await expect(cymraegSelect).toBeVisible();
@@ -23,11 +25,8 @@ test('User can select Cymraeg status and canvas remains visible', async ({ page 
 });
 
 test('should display correct Cymraeg text when Learner or Fluent is selected', async ({ page }) => {
-  await page.goto('/');
-
-  // Select an image that has logoConfig (e.g., the Christmas 2025 Fluent Welsh background)
-  // We need to wait for images to load
-  await page.getByRole('button', { name: /Select .* as background/ }).first().click();
+  // Select an image (Image 1 has logo config)
+  await page.getByTestId('bg-select-1').click();
 
   // Select 'Learner' from the Cymraeg dropdown
   await page.getByLabel('Cymraeg').selectOption('Learner');
@@ -49,21 +48,27 @@ test('should display correct Cymraeg text when Learner or Fluent is selected', a
 });
 
 test('Cymraeg logo functionality does not crash application', async ({ page }) => {
-    await page.goto('/');
-
-    // Select a background that definitely has logo config (all do now, but good to be sure)
-    // We can just rely on default or click the first one.
-    const firstBg = page.getByRole('button', { name: /Select .* as background/ }).first();
-    await firstBg.click();
+    // Select background 1
+    await page.getByTestId('bg-select-1').click();
 
     const cymraegSelect = page.getByLabel('Cymraeg');
     
     // Toggle through options
     await cymraegSelect.selectOption('Learner');
-    await page.waitForTimeout(100); // Give it a slight moment for canvas render
+    
+    // Verify object exists instead of waiting arbitrarily
+    await expect.poll(async () => {
+        const obj = await getCanvasObject(page, 'cymraeg-text');
+        return !!obj;
+    }).toBe(true);
     
     await cymraegSelect.selectOption('None');
-    await page.waitForTimeout(100);
+    
+    // Verify object is gone
+    await expect.poll(async () => {
+        const obj = await getCanvasObject(page, 'cymraeg-text');
+        return !!obj;
+    }).toBe(false);
 
     // Enter some text as well to ensure interactions work together
     await page.getByLabel('Name').fill('Test User');
