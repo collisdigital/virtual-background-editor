@@ -1,8 +1,6 @@
 import { useState, useRef, useMemo } from 'react';
-import ImageSelector from '../components/ImageSelector';
 import PreviewCanvas from '../components/PreviewCanvas';
-import TextInput from '../components/TextInput';
-import SelectInput from '../components/SelectInput';
+import ControlPanel from '../components/ControlPanel';
 import { backgrounds } from '../config/backgrounds';
 import { useImageProcessor } from '../hooks/useImageProcessor';
 
@@ -32,42 +30,18 @@ const HomePage = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
       <main className="flex flex-col-reverse md:flex-row gap-4 md:gap-8 p-1 md:p-2 w-full max-w-7xl mx-auto flex-grow">
-        <div className="w-full md:w-1/3 lg:w-1/4">
-          <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md space-y-4">
-            <h2 className="text-xl font-semibold mb-4">Controls</h2>
-            {imageLoadingError && (
-              <p className="text-red-500 text-sm mb-2">{imageLoadingError}</p>
-            )}
-            <ImageSelector 
-              backgrounds={backgroundsWithBaseUrl} 
-              onSelect={(bg) => selectImage(bg, { name, title: jobTitle })} 
-            />
-            <div className="space-y-4">
-              <TextInput label="Name" value={name} onChange={handleNameChange} />
-              <TextInput
-                label="Job Title"
-                value={jobTitle}
-                onChange={handleJobTitleChange}
-              />
-              <SelectInput
-                label="Cymraeg"
-                value={cymraegStatus}
-                options={[
-                  { value: 'None', label: 'None' },
-                  { value: 'Learner', label: 'Learner' },
-                  { value: 'Fluent', label: 'Fluent' },
-                ]}
-                onChange={(val) => updateCymraegStatus(val as 'None' | 'Learner' | 'Fluent')}
-              />
-            </div>
-            <button
-              onClick={downloadImage}
-              className="w-full mt-6 px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
-            >
-              Download Image
-            </button>
-          </div>
-        </div>
+        <ControlPanel
+          backgrounds={backgroundsWithBaseUrl}
+          onSelectImage={(bg) => selectImage(bg, { name, title: jobTitle })}
+          name={name}
+          onNameChange={handleNameChange}
+          jobTitle={jobTitle}
+          onJobTitleChange={handleJobTitleChange}
+          cymraegStatus={cymraegStatus}
+          onCymraegStatusChange={updateCymraegStatus}
+          onDownload={downloadImage}
+          imageLoadingError={imageLoadingError}
+        />
         <div className="w-full md:w-2/3 lg:w-3/4">
           <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md h-full flex flex-col">
             <h2 className="text-xl font-semibold mb-4">Preview</h2>
