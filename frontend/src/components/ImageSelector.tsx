@@ -29,6 +29,7 @@ const ImageSelector = ({ backgrounds, onSelect }: ImageSelectorProps) => {
             }`}
             aria-label={`Select ${bg.name} as background`}
             aria-pressed={selectedId === bg.id}
+            title={bg.name}
           >
             <img
               src={bg.src}
