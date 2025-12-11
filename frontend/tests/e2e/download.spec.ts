@@ -22,5 +22,5 @@ test('download a customized image', async ({ page }) => {
   expect(download).not.toBeNull();
 
   // Assert that the downloaded file has the correct name
-  expect(download.suggestedFilename()).toBe('virtual-background.png');
+  expect(download.suggestedFilename()).toBe('DHCWTeamsBackground-2024-Dark-Personalised.png');
 });

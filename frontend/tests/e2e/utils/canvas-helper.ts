@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+import * as fabric from 'fabric';
 
 export interface CanvasObject {
   type: string;
@@ -10,7 +11,14 @@ export interface CanvasObject {
 }
 
 interface FabricCanvasElement extends HTMLCanvasElement {
-  __fabric?: any; // We can't easily import fabric types in browser context here without strict dependency, keeping any for the fabric instance itself is safer for serializability check
+  __fabric?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  // We can't easily import fabric types in browser context here without strict 
+  // dependency, keeping any for the fabric instance itself is safer for 
+  // serializability check
+}
+
+interface E2EFabricObject extends fabric.Object {
+  name?: string;
 }
 
 /**
@@ -23,7 +31,7 @@ export async function getCanvasObject(page: Page, name: string): Promise<CanvasO
       return null;
     }
     const fabricCanvas = canvasEl.__fabric;
-    const targetObject = fabricCanvas.getObjects().find((obj: any) => obj.name === objectName);
+    const targetObject = fabricCanvas.getObjects().find((obj: E2EFabricObject) => obj.name === objectName);
     
     if (!targetObject) {
       return null;

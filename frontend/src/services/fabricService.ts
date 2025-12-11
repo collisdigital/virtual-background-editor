@@ -4,6 +4,13 @@ import { BackgroundImage, LogoConfig, Placeholder } from '../config/backgrounds'
 interface FabricObjectWithConfig extends fabric.Object {
   _placeholder?: Placeholder;
   _logoConfig?: LogoConfig;
+  name?: string;
+}
+
+interface LayoutMetrics {
+  scale: number;
+  imgLeft: number;
+  imgTop: number;
 }
 
 const getLayoutMetrics = (canvas: fabric.Canvas) => {
@@ -22,24 +29,24 @@ const getLayoutMetrics = (canvas: fabric.Canvas) => {
   return { scale, imgLeft, imgTop };
 };
 
-const positionPlaceholderObject = (obj: fabric.Object, placeholder: Placeholder, { scale, imgLeft, imgTop }: any) => {
+const positionPlaceholderObject = (obj: fabric.Object, placeholder: Placeholder, metrics: LayoutMetrics) => {
   obj.set({
-    left: imgLeft + placeholder.x * scale,
-    top: imgTop + placeholder.y * scale,
-    width: placeholder.width * scale,
-    fontSize: placeholder.fontSize * scale,
+    left: metrics.imgLeft + placeholder.x * metrics.scale,
+    top: metrics.imgTop + placeholder.y * metrics.scale,
+    width: placeholder.width * metrics.scale,
+    fontSize: placeholder.fontSize * metrics.scale,
     scaleX: 1,
     scaleY: 1,
   });
   obj.setCoords();
 };
 
-const positionLogoObjects = (logoObj: fabric.Object | undefined, textObj: fabric.Object | undefined, config: LogoConfig, { scale, imgLeft, imgTop }: any) => {
-  if (logoObj && logoObj.width) {
-    const logoScale = (config.width * scale) / logoObj.width;
+const positionLogoObjects = (logoObj: fabric.Object | undefined, textObj: fabric.Object | undefined, config: LogoConfig, metrics: LayoutMetrics) => {
+  if (logoObj?.width) {
+    const logoScale = (config.width * metrics.scale) / logoObj.width;
     logoObj.set({
-      left: imgLeft + config.x * scale,
-      top: imgTop + config.y * scale,
+      left: metrics.imgLeft + config.x * metrics.scale,
+      top: metrics.imgTop + config.y * metrics.scale,
       scaleX: logoScale,
       scaleY: logoScale,
     });
@@ -47,14 +54,14 @@ const positionLogoObjects = (logoObj: fabric.Object | undefined, textObj: fabric
   }
 
   if (textObj) {
-    const xOffset = config.textXOffset * scale;
-    const yOffset = config.textYOffset * scale;
+    const xOffset = config.textXOffset * metrics.scale;
+    const yOffset = config.textYOffset * metrics.scale;
     const baseFontSize = config.fontSize;
     textObj.set({
-      left: imgLeft + (config.x + config.width) * scale + xOffset,
-      top: imgTop + config.y * scale + yOffset,
-      fontSize: baseFontSize * scale,
-      width: 50 * scale,
+      left: metrics.imgLeft + (config.x + config.width) * metrics.scale + xOffset,
+      top: metrics.imgTop + config.y * metrics.scale + yOffset,
+      fontSize: baseFontSize * metrics.scale,
+      width: 50 * metrics.scale,
       scaleX: 1,
       scaleY: 1,
     });
@@ -89,8 +96,8 @@ export const fabricService = {
     const objects = canvas.getObjects() as FabricObjectWithConfig[];
     
     // Group logo objects
-    const logoObj = objects.find(o => (o as any).name === 'cymraeg-logo');
-    const logoTextObj = objects.find(o => (o as any).name === 'cymraeg-text');
+    const logoObj = objects.find(o => o.name === 'cymraeg-logo');
+    const logoTextObj = objects.find(o => o.name === 'cymraeg-text');
 
     objects.forEach((obj) => {
       if (obj._placeholder) {
@@ -99,7 +106,7 @@ export const fabricService = {
     });
 
     // Update logo pair if they exist and have config attached (they should)
-    if (logoObj && logoObj._logoConfig) {
+    if (logoObj?._logoConfig) {
       positionLogoObjects(logoObj, logoTextObj, logoObj._logoConfig, metrics);
     }
     
@@ -114,7 +121,7 @@ export const fabricService = {
     if (!placeholder) return;
 
     // Check for existing text object
-    const existingObject = canvas.getObjects().find((obj) => (obj as any).name === id) as fabric.Textbox | undefined;
+    const existingObject = canvas.getObjects().find(o => o.name === id) as fabric.Textbox | undefined;
 
     if (existingObject) {
       existingObject.set({ text });
@@ -157,8 +164,8 @@ export const fabricService = {
           return;
       }
 
-      const existingLogo = canvas.getObjects().find((obj) => (obj as any).name === 'cymraeg-logo');
-      const existingText = canvas.getObjects().find((obj) => (obj as any).name === 'cymraeg-text') as fabric.Textbox | undefined;
+      const existingLogo = canvas.getObjects().find(o => o.name === 'cymraeg-logo');                                                                                                                               
+      const existingText = canvas.getObjects().find(o => o.name === 'cymraeg-text');
 
       if (existingLogo && existingText) {
           // Update existing text
@@ -175,8 +182,8 @@ export const fabricService = {
           // Position newly added logo
           const metrics = getLayoutMetrics(canvas);
           if (metrics) {
-             const newLogo = canvas.getObjects().find((obj) => (obj as any).name === 'cymraeg-logo');
-             const newText = canvas.getObjects().find((obj) => (obj as any).name === 'cymraeg-text');
+             const newLogo = canvas.getObjects().find(o => o.name === 'cymraeg-logo');
+             const newText = canvas.getObjects().find(o => o.name === 'cymraeg-text');
              positionLogoObjects(newLogo, newText, logoConfig, metrics);
              canvas.requestRenderAll();
           }
@@ -229,8 +236,8 @@ export const fabricService = {
    * Removes the Cymraeg logo and text from the canvas.
    */
   removeLogo: (canvas: fabric.Canvas) => {
-    const existingLogo = canvas.getObjects().find((obj) => (obj as any).name === 'cymraeg-logo');
-    const existingText = canvas.getObjects().find((obj) => (obj as any).name === 'cymraeg-text');
+    const existingLogo = canvas.getObjects().find(o => o.name === 'cymraeg-logo');
+    const existingText = canvas.getObjects().find(o => o.name === 'cymraeg-text');
 
     if (existingLogo) canvas.remove(existingLogo);
     if (existingText) canvas.remove(existingText);

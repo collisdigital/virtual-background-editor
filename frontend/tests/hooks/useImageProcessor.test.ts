@@ -39,15 +39,14 @@ vi.mock('fabric', () => {
       fromURL: mockFabricImageFromURL,
     },
     Textbox: class {
-      constructor(text: string, options: any) {
-        (this as any).text = text;
+      constructor(text: string, options: fabric.ITextboxOptions) {
         Object.assign(this, options);
       }
       set = mockSet;
       setCoords = vi.fn();
     },
     StaticCanvas: class {
-      constructor(el: HTMLCanvasElement | null, options: any) {
+      constructor(el: HTMLCanvasElement | null, options: fabric.ICanvasOptions) {
         Object.assign(this, options);
       }
       dispose = vi.fn();

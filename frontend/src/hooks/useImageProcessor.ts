@@ -28,7 +28,7 @@ export const useImageProcessor = (
     let height = 0; // Initialize height to 0, will be calculated
 
     const bgImage = fabricCanvas.current.backgroundImage as fabric.FabricImage;
-    if (bgImage && bgImage.width && bgImage.height) {
+    if (bgImage?.width && bgImage?.height) {
       const aspectRatio = bgImage.width / bgImage.height;
       height = width / aspectRatio; // Image's aspect ratio
     } else {
