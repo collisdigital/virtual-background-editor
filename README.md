@@ -43,7 +43,7 @@ frontend/
 1.  **Clone the repository**:
     ```bash
     git clone <repository-url>
-    cd background-name-title-editor
+    cd virtual-background-editor
     ```
 
 2.  **Install dependencies**:
