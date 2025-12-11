@@ -121,7 +121,7 @@ export const fabricService = {
     if (!placeholder) return;
 
     // Check for existing text object
-    const existingObject = canvas.getObjects().find(o => o.name === id) as fabric.Textbox | undefined;
+    const existingObject = canvas.getObjects().find(o => (o as FabricObjectWithConfig).name === id) as fabric.Textbox | undefined;
 
     if (existingObject) {
       existingObject.set({ text });
@@ -164,8 +164,7 @@ export const fabricService = {
           return;
       }
 
-      const existingLogo = canvas.getObjects().find(o => o.name === 'cymraeg-logo');                                                                                                                               
-      const existingText = canvas.getObjects().find(o => o.name === 'cymraeg-text');
+      const { existingLogo, existingText } = findLogoObjects(canvas);
 
       if (existingLogo && existingText) {
           // Update existing text
@@ -182,9 +181,8 @@ export const fabricService = {
           // Position newly added logo
           const metrics = getLayoutMetrics(canvas);
           if (metrics) {
-             const newLogo = canvas.getObjects().find(o => o.name === 'cymraeg-logo');
-             const newText = canvas.getObjects().find(o => o.name === 'cymraeg-text');
-             positionLogoObjects(newLogo, newText, logoConfig, metrics);
+             const { existingLogo, existingText } = findLogoObjects(canvas);
+             positionLogoObjects(existingLogo, existingText, logoConfig, metrics);
              canvas.requestRenderAll();
           }
       }
@@ -236,8 +234,7 @@ export const fabricService = {
    * Removes the Cymraeg logo and text from the canvas.
    */
   removeLogo: (canvas: fabric.Canvas) => {
-    const existingLogo = canvas.getObjects().find(o => o.name === 'cymraeg-logo');
-    const existingText = canvas.getObjects().find(o => o.name === 'cymraeg-text');
+    const { existingLogo, existingText } = findLogoObjects(canvas);
 
     if (existingLogo) canvas.remove(existingLogo);
     if (existingText) canvas.remove(existingText);
@@ -326,3 +323,9 @@ export const fabricService = {
     return tempCanvas;
   },
 };
+
+function findLogoObjects(canvas: fabric.Canvas) {
+  const existingLogo = canvas.getObjects().find((o) => (o as FabricObjectWithConfig).name === 'cymraeg-logo');
+  const existingText = canvas.getObjects().find((o) => (o as FabricObjectWithConfig).name === 'cymraeg-text');
+  return { existingLogo, existingText };
+}
