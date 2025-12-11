@@ -1,6 +1,8 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useImageProcessor } from '../../src/hooks/useImageProcessor';
+import { createLogoConfig, createPlaceholders } from '../../src/config/backgrounds';
+import type * as fabric from 'fabric';
 
 const { 
   mockSet, 
@@ -39,14 +41,14 @@ vi.mock('fabric', () => {
       fromURL: mockFabricImageFromURL,
     },
     Textbox: class {
-      constructor(text: string, options: fabric.ITextboxOptions) {
+      constructor(text: string, options: Record<string, unknown>) {
         Object.assign(this, options);
       }
       set = mockSet;
       setCoords = vi.fn();
     },
     StaticCanvas: class {
-      constructor(el: HTMLCanvasElement | null, options: fabric.ICanvasOptions) {
+      constructor(el: HTMLCanvasElement | null, options: fabric.CanvasOptions) {
         Object.assign(this, options);
       }
       dispose = vi.fn();
@@ -86,9 +88,7 @@ describe('useImageProcessor', () => {
       id: '1',
       name: 'Test BG',
       src: 'test.png',
-      placeholders: [],
-      originalWidth: 2000,
-      originalHeight: 1000,
+      placeholders: createPlaceholders(100, 100, 200, 200),
     };
     await act(async () => {
       await result.current.selectImage(mockImageConfig);
@@ -123,9 +123,7 @@ describe('useImageProcessor', () => {
       id: '1',
       name: 'Test BG',
       src: 'test.png',
-      placeholders: [
-        { id: 'name', x: 100, y: 50, width: 200, font: 'Arial', fontSize: 20, fill: 'black', textAlign: 'left' as const }
-      ]
+      placeholders: createPlaceholders(100, 100, 200, 200),
     };
 
     await act(async () => {
@@ -152,8 +150,8 @@ describe('useImageProcessor', () => {
       id: '1',
       name: 'Test BG',
       src: 'test.png',
-      placeholders: [],
-      logoConfig: { x: 100, y: 100, width: 50 }
+      placeholders: createPlaceholders(100, 100, 200, 200),
+      logoConfig: createLogoConfig(100, 100)
     };
 
     await act(async () => {
@@ -185,8 +183,8 @@ describe('useImageProcessor', () => {
       id: '1',
       name: 'Test BG',
       src: 'test.png',
-      placeholders: [],
-      logoConfig: { x: 100, y: 100, width: 50 }
+      placeholders: createPlaceholders(100, 100, 200, 200),
+      logoConfig: createLogoConfig(100, 100)
     };
 
     await act(async () => {
@@ -213,11 +211,12 @@ describe('useImageProcessor', () => {
         id: '1',
         name: 'Test BG',
         src: 'test.png',
-        placeholders: [],
-        logoConfig: { x: 100, y: 100, width: 50 }
+        placeholders: createPlaceholders(100, 100, 200, 200),
+        logoConfig: createLogoConfig(100, 100)
     };
+
     await act(async () => {
-        await result.current.selectImage(mockImageConfig);
+      await result.current.selectImage(mockImageConfig);
     });
 
     // Mock an existing logo object
@@ -243,9 +242,7 @@ describe('useImageProcessor', () => {
       id: '1',
       name: 'Test BG',
       src: 'test.png',
-      placeholders: [
-          { id: 'name', x: 0, y: 0, width: 100, font: 'Arial', fontSize: 20, fill: 'black', textAlign: 'left' as const }
-      ],
+      placeholders: createPlaceholders(100, 100, 200, 200),
     };
     await act(async () => {
         await result.current.selectImage(mockImageConfig);
@@ -275,11 +272,12 @@ describe('useImageProcessor', () => {
       id: '1',
       name: 'Test BG',
       src: 'test.png',
-      placeholders: [],
-      logoConfig: { x: 100, y: 100, width: 50 }
+      placeholders: createPlaceholders(100, 100, 200, 200),
+      logoConfig: createLogoConfig(100, 100)
     };
+
     await act(async () => {
-        await result.current.selectImage(mockImageConfig);
+      await result.current.selectImage(mockImageConfig);
     });
 
     // Mock existing objects
