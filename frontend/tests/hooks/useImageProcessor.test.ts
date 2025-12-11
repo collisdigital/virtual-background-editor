@@ -100,7 +100,7 @@ describe('useImageProcessor', () => {
     });
 
     expect(createElementSpy).toHaveBeenCalledWith('a');
-    expect(linkMock.download).toBe('Test BG-Personalised.png');
+    expect(linkMock.download).toBe('test-Personalised.png');
     expect(linkClickSpy).toHaveBeenCalled();
   });
 

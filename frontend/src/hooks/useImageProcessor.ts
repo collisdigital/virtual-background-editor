@@ -156,14 +156,17 @@ export const useImageProcessor = (
       const link = document.createElement('a');
       link.href = dataURL;
       
-      const originalFileName = selectedImage.name;
-      const lastDotIndex = originalFileName.lastIndexOf('.');
-      let baseName = originalFileName;
+      // Extract filename from src path (e.g., "/images/bg.png" -> "bg.png")
+      const srcPath = selectedImage.src;
+      const fileNameWithExt = srcPath.substring(srcPath.lastIndexOf('/') + 1);
+      
+      const lastDotIndex = fileNameWithExt.lastIndexOf('.');
+      let baseName = fileNameWithExt;
       let extension = '';
 
       if (lastDotIndex !== -1) {
-        baseName = originalFileName.substring(0, lastDotIndex);
-        extension = originalFileName.substring(lastDotIndex);
+        baseName = fileNameWithExt.substring(0, lastDotIndex);
+        extension = fileNameWithExt.substring(lastDotIndex);
       }
       const downloadFileName = `${baseName}-Personalised${extension || '.png'}`;
 
