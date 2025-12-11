@@ -155,7 +155,19 @@ export const useImageProcessor = (
       });
       const link = document.createElement('a');
       link.href = dataURL;
-      link.download = 'virtual-background.png';
+      
+      const originalFileName = selectedImage.name;
+      const lastDotIndex = originalFileName.lastIndexOf('.');
+      let baseName = originalFileName;
+      let extension = '';
+
+      if (lastDotIndex !== -1) {
+        baseName = originalFileName.substring(0, lastDotIndex);
+        extension = originalFileName.substring(lastDotIndex);
+      }
+      const downloadFileName = `${baseName}-Personalised${extension || '.png'}`;
+
+      link.download = downloadFileName;
       link.click();
       
       tempCanvas.dispose();
