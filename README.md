@@ -35,7 +35,7 @@ frontend/
 
 ### Prerequisites
 
--   Node.js (v18 or later)
+-   Node.js (v22.22.2 or later)
 -   npm (v9 or later)
 
 ### Installation

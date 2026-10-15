@@ -22,6 +22,7 @@ interface InitialEditorState {
 
 const getImageMetrics = (canvas: fabric.Canvas) => {
   const background = canvas.backgroundImage;
+  if (background && typeof background.setCoords === 'function') background.setCoords();
   const bounds = background?.getBoundingRect();
   return {
     left: bounds?.left ?? 0,
@@ -102,6 +103,7 @@ export const useImageProcessor = (
           width: bounds.width / scale,
           height: bounds.height / scale,
         };
+        fabricService.setEditorBounds(selectedObject, nextBounds, scale);
         setSelectedElementBounds((previous) => (
           previous?.x === nextBounds.x && previous.y === nextBounds.y
             && previous.width === nextBounds.width && previous.height === nextBounds.height
@@ -179,6 +181,13 @@ export const useImageProcessor = (
       target.left - resizedBounds.left, target.top - resizedBounds.top
     )));
     object.setCoords();
+    const updatedBounds = object.getBoundingRect();
+    fabricService.setEditorBounds(object, {
+      x: (updatedBounds.left - left) / scale,
+      y: (updatedBounds.top - top) / scale,
+      width: updatedBounds.width / scale,
+      height: updatedBounds.height / scale,
+    }, scale);
     lastSelectedObject.current = object;
     canvas.requestRenderAll();
   };
@@ -202,7 +211,12 @@ export const useImageProcessor = (
     textValues: Record<string, string>,
     status: 'None' | 'Learner' | 'Fluent'
   ) => {
-    setSelectedImage(image);
+    const editableImage = {
+      ...image,
+      placeholders: image.placeholders.map((placeholder) => ({ ...placeholder })),
+      ...(image.logoConfig ? { logoConfig: { ...image.logoConfig } } : {}),
+    };
+    setSelectedImage(editableImage);
     if (!fabricCanvas.current) return;
 
     try {
@@ -224,12 +238,12 @@ export const useImageProcessor = (
 
       // Re-add text
       Object.entries(textValues).forEach(([id, text]) => {
-        fabricService.updateText(canvas, image, id, text);
+        fabricService.updateText(canvas, editableImage, id, text);
       });
 
       // Re-add logo
-      if (status !== 'None' && image.logoConfig) {
-        await fabricService.addLogo(canvas, image.logoConfig, status);
+      if (status !== 'None' && editableImage.logoConfig) {
+        await fabricService.addLogo(canvas, editableImage.logoConfig, status);
       }
 
       updateCanvasDimensions();

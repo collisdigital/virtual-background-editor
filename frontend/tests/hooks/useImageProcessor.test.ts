@@ -106,6 +106,84 @@ describe('useImageProcessor', () => {
     });
   });
 
+  it('uses edited image-space bounds for responsive layout and downloaded objects', async () => {
+    const { FabricImage, Textbox } = await vi.importActual<typeof import('fabric')>('fabric');
+    const placeholder = createPlaceholders(100, 100, 200, 200)[0];
+    const text = new Textbox('Edited name', { originX: 'left', originY: 'top' }) as fabric.Textbox & {
+      _placeholder: typeof placeholder;
+      _editorBounds: { x: number; y: number; width: number; height: number; fontSize: number };
+    };
+    text._placeholder = placeholder;
+    text._editorBounds = { x: 240, y: 180, width: 600, height: 160, fontSize: 80 };
+
+    const backgroundImage = {
+      width: 2000,
+      height: 1000,
+      set: vi.fn(),
+    } as unknown as fabric.FabricImage;
+    const layoutCanvas = {
+      width: 1000,
+      height: 500,
+      backgroundImage,
+      getObjects: () => [text],
+      requestRenderAll: vi.fn(),
+    } as unknown as fabric.Canvas;
+    fabricService.updateLayout(layoutCanvas);
+    expect(text.left).toBe(120);
+    expect(text.top).toBe(90);
+    expect(text.width).toBe(300);
+    expect(text.fontSize).toBe(40);
+    expect(text.getBoundingRect().height).toBeCloseTo(80);
+
+    layoutCanvas.width = 500;
+    layoutCanvas.height = 250;
+    fabricService.updateLayout(layoutCanvas);
+    expect(text.left).toBe(60);
+    expect(text.top).toBe(45);
+    expect(text.width).toBe(150);
+    expect(text.fontSize).toBe(20);
+    expect(text.getBoundingRect().height).toBeCloseTo(40);
+
+    const background = { width: 2000, height: 1000, set: mockSet };
+    const logoImage = { width: 100, height: 50, set: mockSet };
+    mockFabricImageFromURL.mockResolvedValueOnce(background).mockResolvedValueOnce(logoImage);
+    const logoConfig = createLogoConfig(300, 400);
+    const logo = new FabricImage(document.createElement('img'), { width: 100, height: 50 }) as fabric.FabricImage & {
+      name: string;
+      _editorBounds: { x: number; y: number; width: number; height: number };
+    };
+    logo.name = 'cymraeg-logo';
+    logo._editorBounds = { x: 900, y: 800, width: 300, height: 120 };
+    const logoText = new Textbox('Dysgwyr\nLearner') as fabric.Textbox & {
+      name: string;
+      _editorBounds: { x: number; y: number; width: number; height: number; fontSize: number };
+    };
+    logoText.name = 'cymraeg-text';
+    logoText._editorBounds = { x: 1250, y: 810, width: 180, height: 110, fontSize: 70 };
+
+    const exported = await fabricService.generateDownloadCanvas(
+      { id: '1', name: 'Test BG', src: 'test.png', placeholders: [placeholder], logoConfig },
+      { width: 2000, height: 1000 },
+      [text, logo, logoText],
+      'Learner'
+    );
+    const [exportedText, exportedLogo, exportedLogoText] = mockCanvasAdd.mock.calls.map(([object]) => object) as fabric.FabricObject[];
+    expect(exportedText.left).toBe(240);
+    expect(exportedText.top).toBe(180);
+    expect(exportedText.width).toBe(600);
+    expect((exportedText as fabric.Textbox).fontSize).toBe(80);
+    expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({
+      left: 900, top: 800, scaleX: 3, scaleY: 2.4,
+    }));
+    expect(exportedLogo).toBeDefined();
+    expect(exportedLogoText.left).toBe(1250);
+    expect(exportedLogoText.top).toBe(810);
+    expect(exportedLogoText.width).toBe(180);
+    expect((exportedLogoText as fabric.Textbox).fontSize).toBe(70);
+    expect(exportedLogoText).toBeDefined();
+    exported.dispose();
+  });
+
   it('restores the initial background, text, and Welsh logo after canvas initialization', async () => {
     const image = {
       id: '1', name: 'Test BG', src: 'test.png',
@@ -229,6 +307,8 @@ describe('useImageProcessor', () => {
     edit('width', 600);
     edit('height', 120);
     expect(result.current.selectedElementBounds).toEqual({ x: -50, y: 60, width: 600, height: 120 });
+    expect((object as fabric.FabricObject & { _editorBounds: { x: number; y: number; width: number; height: number } })._editorBounds)
+      .toEqual({ x: -50, y: 60, width: 600, height: 120 });
     expect(mockRequestRenderAll).toHaveBeenCalled();
 
     mockGetActiveObject.mockReturnValue(undefined);
