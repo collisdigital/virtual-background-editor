@@ -281,6 +281,12 @@ export const fabricService = {
     const originalImg = await fabric.FabricImage.fromURL(selectedImage.src, {
       crossOrigin: 'anonymous',
     });
+    originalImg.set({
+      originX: 'left',
+      originY: 'top',
+      left: 0,
+      top: 0,
+    });
     tempCanvas.backgroundImage = originalImg;
 
     // Add Text Objects

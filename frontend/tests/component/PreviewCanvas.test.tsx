@@ -4,6 +4,71 @@ import { describe, it, expect, vi } from 'vitest';
 import PreviewCanvas from '../../src/components/PreviewCanvas';
 
 describe('PreviewCanvas', () => {
+  it('adds independent full-span rulers and removes them without changing the canvas', async () => {
+    const user = userEvent.setup();
+    render(<PreviewCanvas />);
+    const canvas = screen.getByRole('presentation');
+    expect(screen.queryByRole('separator')).not.toBeInTheDocument();
+    await user.click(screen.getByLabelText('Horizontal ruler'));
+    await user.click(screen.getByLabelText('Vertical ruler'));
+    const horizontal = screen.getByRole('separator', { name: 'horizontal alignment ruler' });
+    const vertical = screen.getByRole('separator', { name: 'vertical alignment ruler' });
+    expect(horizontal).toHaveStyle({ top: '50%' });
+    expect(horizontal).toHaveClass('w-full');
+    expect(vertical).toHaveStyle({ left: '50%' });
+    expect(vertical).toHaveClass('h-full');
+    fireEvent.change(screen.getByLabelText('horizontal ruler position'), { target: { value: '25' } });
+    expect(horizontal).toHaveStyle({ top: '25%' });
+    expect(vertical).toHaveStyle({ left: '50%' });
+    await user.click(screen.getByLabelText('Horizontal ruler'));
+    expect(screen.queryByRole('separator', { name: 'horizontal alignment ruler' })).not.toBeInTheDocument();
+    expect(vertical).toBeInTheDocument();
+    expect(screen.getByRole('presentation')).toBe(canvas);
+  });
+
+  it('moves rulers with the keyboard and clamps them to preview edges', async () => {
+    const user = userEvent.setup();
+    render(<PreviewCanvas />);
+    await user.click(screen.getByLabelText('Vertical ruler'));
+    const ruler = screen.getByRole('separator');
+    ruler.focus();
+    await user.keyboard('{ArrowLeft}');
+    expect(ruler).toHaveAttribute('aria-valuenow', '49');
+    await user.keyboard('{Shift>}{ArrowRight}{/Shift}');
+    expect(ruler).toHaveAttribute('aria-valuenow', '59');
+    await user.keyboard('{End}{ArrowRight}');
+    expect(ruler).toHaveStyle({ left: '100%' });
+    await user.keyboard('{Home}{ArrowLeft}');
+    expect(ruler).toHaveStyle({ left: '0%' });
+  });
+
+  it.each(['horizontal', 'vertical'] as const)('drags the %s ruler relative to the preview and clamps its position', async (orientation) => {
+    const user = userEvent.setup();
+    render(<PreviewCanvas />);
+    await user.click(screen.getByLabelText(`${orientation === 'horizontal' ? 'Horizontal' : 'Vertical'} ruler`));
+    const ruler = screen.getByRole('separator');
+    const capture = vi.fn();
+    const release = vi.fn();
+    const hasCapture = vi.fn(() => false);
+    Object.assign(ruler, { setPointerCapture: capture, releasePointerCapture: release, hasPointerCapture: hasCapture });
+    vi.spyOn(ruler.parentElement!, 'getBoundingClientRect').mockReturnValue({
+      left: 100, top: 50, width: 400, height: 200,
+    } as DOMRect);
+    fireEvent(ruler, new MouseEvent('pointermove', { bubbles: true, clientX: 200, clientY: 100 }));
+    expect(ruler).toHaveAttribute('aria-valuenow', '50');
+    fireEvent.pointerDown(ruler);
+    expect(capture).toHaveBeenCalledTimes(1);
+    hasCapture.mockReturnValue(true);
+    fireEvent(ruler, new MouseEvent('pointermove', { bubbles: true, clientX: 200, clientY: 100 }));
+    expect(ruler).toHaveAttribute('aria-valuenow', '25');
+    fireEvent(ruler, new MouseEvent('pointermove', { bubbles: true, clientX: -100, clientY: -100 }));
+    expect(ruler).toHaveAttribute('aria-valuenow', '0');
+    fireEvent(ruler, new MouseEvent('pointermove', { bubbles: true, clientX: 1000, clientY: 1000 }));
+    expect(ruler).toHaveAttribute('aria-valuenow', '100');
+    fireEvent.pointerUp(ruler);
+    expect(release).toHaveBeenCalledTimes(1);
+  });
+
   it('renders a canvas element', () => {
     render(<PreviewCanvas />);
     const canvas = screen.getByRole('presentation');

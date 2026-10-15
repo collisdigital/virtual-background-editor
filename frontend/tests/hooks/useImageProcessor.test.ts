@@ -84,6 +84,28 @@ describe('useImageProcessor', () => {
     mockGetObjects.mockReturnValue([]);
   });
 
+  it('exports the entire background at the canvas top-left', async () => {
+    const { FabricImage } = await vi.importActual<typeof import('fabric')>('fabric');
+    const dimensions = { width: 1920, height: 1080 };
+    const background = new FabricImage(document.createElement('img'), dimensions);
+    mockFabricImageFromURL.mockResolvedValueOnce(background);
+
+    const canvas = await fabricService.generateDownloadCanvas(
+      { id: '1', name: 'Test BG', src: 'test.png', placeholders: [] },
+      dimensions,
+      [],
+      'None'
+    );
+
+    expect(canvas.width).toBe(dimensions.width);
+    expect(canvas.height).toBe(dimensions.height);
+    expect(canvas.backgroundImage).toBe(background);
+    background.setCoords();
+    expect(background.getBoundingRect()).toEqual({
+      left: 0, top: 0, ...dimensions,
+    });
+  });
+
   it('restores the initial background, text, and Welsh logo after canvas initialization', async () => {
     const image = {
       id: '1', name: 'Test BG', src: 'test.png',

@@ -137,7 +137,7 @@ export const backgrounds: BackgroundImage[] = [
     id: '7',
     name: 'Black History Month 2026',
     src: '/images/backgrounds/DHCWTeamsBackground-2026-BHM.png',
-    // TODO: Replace these name X/Y and title X/Y coordinates.
-    placeholders: createPlaceholders(0, 0, 0, 0),
+    placeholders: createPlaceholders(570, 204, 570, 407),
+    logoConfig: createLogoConfig(3300, 1850),
   },
 ];
