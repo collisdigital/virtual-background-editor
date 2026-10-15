@@ -4,6 +4,7 @@ import { BackgroundImage, LogoConfig, Placeholder } from '../config/backgrounds'
 interface FabricObjectWithConfig extends fabric.Object {
   _placeholder?: Placeholder;
   _logoConfig?: LogoConfig;
+  _editorBounds?: { x: number; y: number; width: number; height: number; fontSize?: number };
   name?: string;
 }
 
@@ -12,6 +13,31 @@ interface LayoutMetrics {
   imgLeft: number;
   imgTop: number;
 }
+
+interface EditorBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fontSize?: number;
+}
+
+const createTextBoxControls = () => {
+  const controls = fabric.controlsUtils.createTextboxDefaultControls();
+  for (const [key, control] of Object.entries(controls)) {
+    if (key === 'mtr') continue;
+    control.actionName = 'resizing';
+    control.getActionName = () => 'resizing';
+    control.actionHandler = (event, transform, x, y) => {
+      const widthChanged = control.x !== 0
+        && fabric.controlsUtils.changeWidth(event, transform, x, y);
+      const heightChanged = control.y !== 0
+        && fabric.controlsUtils.changeHeight(event, transform, x, y);
+      return widthChanged || heightChanged;
+    };
+  }
+  return controls;
+};
 
 const getLayoutMetrics = (canvas: fabric.Canvas) => {
   if (!canvas.backgroundImage) return null;
@@ -29,47 +55,71 @@ const getLayoutMetrics = (canvas: fabric.Canvas) => {
   return { scale, imgLeft, imgTop };
 };
 
-const positionPlaceholderObject = (obj: fabric.Object, placeholder: Placeholder, metrics: LayoutMetrics) => {
+const positionPlaceholderObject = (obj: FabricObjectWithConfig, placeholder: Placeholder, metrics: LayoutMetrics) => {
+  const bounds = obj._editorBounds;
   obj.set({
-    left: metrics.imgLeft + placeholder.x * metrics.scale,
-    top: metrics.imgTop + placeholder.y * metrics.scale,
-    width: placeholder.width * metrics.scale,
-    fontSize: placeholder.fontSize * metrics.scale,
+    left: metrics.imgLeft + (bounds?.x ?? placeholder.x) * metrics.scale,
+    top: metrics.imgTop + (bounds?.y ?? placeholder.y) * metrics.scale,
+    width: (bounds?.width ?? placeholder.width) * metrics.scale,
+    fontSize: (bounds?.fontSize ?? placeholder.fontSize) * metrics.scale,
     scaleX: 1,
     scaleY: 1,
+    originX: 'left',
+    originY: 'top',
   });
+  if (bounds && obj.height) {
+    obj.setCoords();
+    const naturalHeight = obj.getBoundingRect().height;
+    if (naturalHeight) obj.set('scaleY', (bounds.height * metrics.scale) / naturalHeight);
+  }
   obj.setCoords();
 };
 
-const positionLogoObjects = (logoObj: fabric.Object | undefined, textObj: fabric.Object | undefined, config: LogoConfig, metrics: LayoutMetrics) => {
+const positionLogoObjects = (logoObj: FabricObjectWithConfig | undefined, textObj: FabricObjectWithConfig | undefined, config: LogoConfig, metrics: LayoutMetrics) => {
   if (logoObj?.width) {
-    const logoScale = (config.width * metrics.scale) / logoObj.width;
+    const bounds = logoObj._editorBounds;
+    const logoScaleX = ((bounds?.width ?? config.width) * metrics.scale) / logoObj.width;
+    const logoScaleY = ((bounds?.height ?? config.width) * metrics.scale) / logoObj.height!;
     logoObj.set({
-      left: metrics.imgLeft + config.x * metrics.scale,
-      top: metrics.imgTop + config.y * metrics.scale,
-      scaleX: logoScale,
-      scaleY: logoScale,
+      left: metrics.imgLeft + (bounds?.x ?? config.x) * metrics.scale,
+      top: metrics.imgTop + (bounds?.y ?? config.y) * metrics.scale,
+      scaleX: logoScaleX,
+      scaleY: logoScaleY,
     });
     logoObj.setCoords();
   }
 
   if (textObj) {
-    const xOffset = config.textXOffset * metrics.scale;
-    const yOffset = config.textYOffset * metrics.scale;
+    const bounds = textObj._editorBounds;
     const baseFontSize = config.fontSize;
     textObj.set({
-      left: metrics.imgLeft + (config.x + config.width) * metrics.scale + xOffset,
-      top: metrics.imgTop + config.y * metrics.scale + yOffset,
-      fontSize: baseFontSize * metrics.scale,
-      width: 50 * metrics.scale,
+      left: metrics.imgLeft + (bounds?.x ?? config.x + config.width + config.textXOffset) * metrics.scale,
+      top: metrics.imgTop + (bounds?.y ?? config.y + config.textYOffset) * metrics.scale,
+      fontSize: (bounds?.fontSize ?? baseFontSize) * metrics.scale,
+      width: (bounds?.width ?? 50) * metrics.scale,
       scaleX: 1,
       scaleY: 1,
     });
+    if (bounds && textObj.height) {
+      textObj.setCoords();
+      const naturalHeight = textObj.getBoundingRect().height;
+      if (naturalHeight) textObj.set('scaleY', (bounds.height * metrics.scale) / naturalHeight);
+    }
     textObj.setCoords();
   }
 };
 
 export const fabricService = {
+  setEditorBounds: (object: fabric.FabricObject, bounds: Omit<EditorBounds, 'fontSize'>, scale: number) => {
+    const editableObject = object as FabricObjectWithConfig;
+    editableObject._editorBounds = {
+      ...bounds,
+      ...('fontSize' in object && typeof object.fontSize === 'number'
+        ? { fontSize: object.fontSize / scale }
+        : {}),
+    };
+  },
+
   /**
    * Calculates the layout for the background image and positions all objects relative to it.
    */
@@ -131,6 +181,7 @@ export const fabricService = {
 
     // Create new text object
     const textObject = new fabric.Textbox(text, {
+      controls: createTextBoxControls(),
       fontFamily: placeholder.font,
       fontSize: placeholder.fontSize,
       fill: placeholder.fill,
@@ -214,6 +265,7 @@ export const fabricService = {
 
       const textContent = status === 'Learner' ? "Dysgwyr\nLearner" : "Rhugl\nFluent";
       const textObj = new fabric.Textbox(textContent, {
+        controls: createTextBoxControls(),
         name: 'cymraeg-text',
         fontFamily: logoConfig.font,
         fill: logoConfig.fill,
@@ -260,6 +312,12 @@ export const fabricService = {
     const originalImg = await fabric.FabricImage.fromURL(selectedImage.src, {
       crossOrigin: 'anonymous',
     });
+    originalImg.set({
+      originX: 'left',
+      originY: 'top',
+      left: 0,
+      top: 0,
+    });
     tempCanvas.backgroundImage = originalImg;
 
     // Add Text Objects
@@ -267,17 +325,23 @@ export const fabricService = {
       const fabricObj = obj as FabricObjectWithConfig;
       if (fabricObj._placeholder) {
         const placeholder = fabricObj._placeholder;
+        const bounds = fabricObj._editorBounds;
         const textObject = new fabric.Textbox((obj as fabric.Textbox).text ?? '', {
           fontFamily: placeholder.font,
-          fontSize: placeholder.fontSize,
+          fontSize: bounds?.fontSize ?? placeholder.fontSize,
           fill: placeholder.fill,
           textAlign: placeholder.textAlign,
-          left: placeholder.x,
-          top: placeholder.y,
-          width: placeholder.width,
+          left: bounds?.x ?? placeholder.x,
+          top: bounds?.y ?? placeholder.y,
+          width: bounds?.width ?? placeholder.width,
           originX: 'left',
           originY: 'top',
         });
+        if (bounds && textObject.height) {
+          textObject.setCoords();
+          const naturalHeight = textObject.getBoundingRect().height;
+          if (naturalHeight) textObject.set('scaleY', bounds.height / naturalHeight);
+        }
         tempCanvas.add(textObject);
       }
     });
@@ -290,12 +354,14 @@ export const fabricService = {
       const logoUrl = `${baseUrl}images/overlays/logo-cymraeg.png`;
       const logoImg = await fabric.FabricImage.fromURL(logoUrl, { crossOrigin: 'anonymous' });
       const config = selectedImage.logoConfig;
+      const logoObject = interactiveObjects.find((obj) => (obj as FabricObjectWithConfig).name === 'cymraeg-logo') as FabricObjectWithConfig | undefined;
+      const logoBounds = logoObject?._editorBounds;
 
       logoImg.set({
-        left: config.x,
-        top: config.y,
-        scaleX: config.width / logoImg.width!,
-        scaleY: config.width / logoImg.width!,
+        left: logoBounds?.x ?? config.x,
+        top: logoBounds?.y ?? config.y,
+        scaleX: (logoBounds?.width ?? config.width) / logoImg.width!,
+        scaleY: (logoBounds?.height ?? config.width) / logoImg.height!,
         originX: 'left',
         originY: 'top',
       });
@@ -303,19 +369,26 @@ export const fabricService = {
 
       const textContent = cymraegStatus === 'Learner' ? "Dysgwyr\nLearner" : "Rhugl\nFluent";
       const baseFontSize = config.fontSize;
+      const logoText = interactiveObjects.find((obj) => (obj as FabricObjectWithConfig).name === 'cymraeg-text') as FabricObjectWithConfig | undefined;
+      const textBounds = logoText?._editorBounds;
 
       const textObj = new fabric.Textbox(textContent, {
         fontFamily: config.font,
-        fontSize: baseFontSize,
+        fontSize: textBounds?.fontSize ?? baseFontSize,
         fill: config.fill,
         textAlign: config.textAlign as 'left' | 'center' | 'right' | 'justify',
-        left: config.x + config.width + config.textXOffset,
-        top: config.y + config.textYOffset,
+        left: textBounds?.x ?? config.x + config.width + config.textXOffset,
+        top: textBounds?.y ?? config.y + config.textYOffset,
         originX: 'left',
         originY: 'top',
-        width: 50,
+        width: textBounds?.width ?? 50,
         lineHeight: 1.1,
       });
+      if (textBounds && textObj.height) {
+        textObj.setCoords();
+        const naturalHeight = textObj.getBoundingRect().height;
+        if (naturalHeight) textObj.set('scaleY', textBounds.height / naturalHeight);
+      }
       tempCanvas.add(textObj);
     }
 

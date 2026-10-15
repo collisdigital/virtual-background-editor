@@ -4,10 +4,11 @@ import { useState, useRef, ChangeEvent } from 'react';
 interface ImageSelectorProps {
   backgrounds: BackgroundImage[];
   onSelect: (image: BackgroundImage) => void;
+  initialSelectedId?: string | null;
 }
 
-const ImageSelector = ({ backgrounds, onSelect }: ImageSelectorProps) => {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+const ImageSelector = ({ backgrounds, onSelect, initialSelectedId = null }: ImageSelectorProps) => {
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
   const [customBackgrounds, setCustomBackgrounds] = useState<BackgroundImage[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 

@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 
-global.ResizeObserver = class ResizeObserver {
+globalThis.ResizeObserver = class ResizeObserver {
   /* eslint-disable @typescript-eslint/no-empty-function */
   observe() {}
   unobserve() {}
