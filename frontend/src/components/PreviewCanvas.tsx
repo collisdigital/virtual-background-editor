@@ -23,8 +23,8 @@ const BoundsInput = ({ field, value, onCommit }: {
       <input
         type="number"
         aria-label={`${label} in image pixels`}
-        step="0.1"
-        min={isSize ? 0.1 : undefined}
+        step="1"
+        min={isSize ? 1 : undefined}
         disabled={value === undefined || !onCommit}
         placeholder="--"
         value={draft ?? formattedValue}

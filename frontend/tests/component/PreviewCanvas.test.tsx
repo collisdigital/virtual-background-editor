@@ -70,10 +70,10 @@ describe('PreviewCanvas', () => {
   });
 
   it.each([
-    ['X', 'x', 10.1],
-    ['Y', 'y', 19.9],
-    ['Width', 'width', 300.1],
-    ['Height', 'height', 79.9],
+    ['X', 'x', 11],
+    ['Y', 'y', 19],
+    ['Width', 'width', 301],
+    ['Height', 'height', 79],
   ])('commits %s spinner changes immediately without blur', (label, field, nextValue) => {
     const onBoundsChange = vi.fn();
     render(<PreviewCanvas selectedElementBounds={{ x: 10, y: 20, width: 300, height: 80 }} onBoundsChange={onBoundsChange} />);
@@ -83,7 +83,10 @@ describe('PreviewCanvas', () => {
     expect(onBoundsChange).toHaveBeenCalledExactlyOnceWith(field, nextValue);
     fireEvent.blur(input);
     expect(onBoundsChange).toHaveBeenCalledTimes(1);
-    expect(input).toHaveAttribute('step', '0.1');
+    expect(input).toHaveAttribute('step', '1');
+    if (field === 'width' || field === 'height') {
+      expect(input).toHaveAttribute('min', '1');
+    }
   });
 
   it('keeps typing as a draft until explicitly committed', async () => {
