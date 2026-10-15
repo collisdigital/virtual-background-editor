@@ -4,11 +4,11 @@ This project is a frontend-only web application that allows users to select a ba
 
 ## Technical Stack
 
--   **Language**: TypeScript 5.x
--   **Framework**: React 18 (with Vite)
--   **Image Manipulation**: Fabric.js 5.x
--   **Styling**: Tailwind CSS 3.x
--   **Testing**: Vitest (unit/component), Playwright (end-to-end)
+-   **Language**: TypeScript 6.x
+-   **Framework**: React 19 (with Vite 8)
+-   **Image Manipulation**: Fabric.js 7.x
+-   **Styling**: Tailwind CSS 4.x
+-   **Testing**: Vitest 5 (unit/component), Playwright 1.x (end-to-end)
 
 ## Project Structure
 

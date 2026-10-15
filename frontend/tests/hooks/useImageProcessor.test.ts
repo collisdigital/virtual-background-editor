@@ -141,6 +141,43 @@ describe('useImageProcessor', () => {
     document.body.removeChild(container);
   });
 
+  it('should position placeholder text from its configured top-left coordinates', async () => {
+    const container = document.createElement('div');
+    container.id = 'preview-container';
+    Object.defineProperty(container, 'clientWidth', { value: 1000 });
+    document.body.appendChild(container);
+
+    const canvasEl = document.createElement('canvas');
+    const canvasRef = { current: canvasEl };
+    const { result } = renderHook(() => useImageProcessor(canvasRef));
+    const imageConfig = {
+      id: '1',
+      name: 'Test BG',
+      src: 'test.png',
+      placeholders: createPlaceholders(100, 120, 200, 220),
+    };
+
+    await act(async () => {
+      await result.current.selectImage(imageConfig);
+    });
+
+    mockSet.mockClear();
+    await act(async () => {
+      result.current.updateText('name', 'Jane Doe');
+    });
+
+    expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({
+      left: 50,
+      top: 60,
+      width: 900,
+      fontSize: 45,
+      originX: 'left',
+      originY: 'top',
+    }));
+
+    document.body.removeChild(container);
+  });
+
   it('should add logo when cymraegStatus is updated', async () => {
     const canvasEl = document.createElement('canvas');
     const canvasRef = { current: canvasEl };

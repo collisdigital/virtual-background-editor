@@ -37,6 +37,8 @@ const positionPlaceholderObject = (obj: fabric.Object, placeholder: Placeholder,
     fontSize: placeholder.fontSize * metrics.scale,
     scaleX: 1,
     scaleY: 1,
+    originX: 'left',
+    originY: 'top',
   });
   obj.setCoords();
 };

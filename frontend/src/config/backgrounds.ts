@@ -133,4 +133,11 @@ export const backgrounds: BackgroundImage[] = [
     placeholders: createPlaceholders(3000, 1180, 3000, 1300, { width: 900, textAlign: 'right' }),
     logoConfig: createLogoConfig(3450, 1450),
   },
+  {
+    id: '7',
+    name: 'Black History Month 2026',
+    src: '/images/backgrounds/DHCWTeamsBackground-2026-BHM.png',
+    // TODO: Replace these name X/Y and title X/Y coordinates.
+    placeholders: createPlaceholders(0, 0, 0, 0),
+  },
 ];
