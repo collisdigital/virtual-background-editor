@@ -5,6 +5,7 @@ import SelectInput from './SelectInput';
 
 interface ControlPanelProps {
   backgrounds: BackgroundImage[];
+  initialSelectedBackgroundId?: string | null;
   onSelectImage: (bg: BackgroundImage) => void;
   name: string;
   onNameChange: (value: string) => void;
@@ -18,6 +19,7 @@ interface ControlPanelProps {
 
 const ControlPanel = ({
   backgrounds,
+  initialSelectedBackgroundId,
   onSelectImage,
   name,
   onNameChange,
@@ -35,7 +37,7 @@ const ControlPanel = ({
         {imageLoadingError && (
           <p className="text-red-500 text-sm mb-2">{imageLoadingError}</p>
         )}
-        <ImageSelector backgrounds={backgrounds} onSelect={onSelectImage} />
+        <ImageSelector backgrounds={backgrounds} onSelect={onSelectImage} initialSelectedId={initialSelectedBackgroundId} />
         <div className="space-y-4">
           <TextInput label="Name" value={name} onChange={onNameChange} />
           <TextInput

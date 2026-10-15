@@ -13,6 +13,23 @@ interface LayoutMetrics {
   imgTop: number;
 }
 
+const createTextBoxControls = () => {
+  const controls = fabric.controlsUtils.createTextboxDefaultControls();
+  for (const [key, control] of Object.entries(controls)) {
+    if (key === 'mtr') continue;
+    control.actionName = 'resizing';
+    control.getActionName = () => 'resizing';
+    control.actionHandler = (event, transform, x, y) => {
+      const widthChanged = control.x !== 0
+        && fabric.controlsUtils.changeWidth(event, transform, x, y);
+      const heightChanged = control.y !== 0
+        && fabric.controlsUtils.changeHeight(event, transform, x, y);
+      return widthChanged || heightChanged;
+    };
+  }
+  return controls;
+};
+
 const getLayoutMetrics = (canvas: fabric.Canvas) => {
   if (!canvas.backgroundImage) return null;
   const bgImage = canvas.backgroundImage as fabric.FabricImage;
@@ -133,6 +150,7 @@ export const fabricService = {
 
     // Create new text object
     const textObject = new fabric.Textbox(text, {
+      controls: createTextBoxControls(),
       fontFamily: placeholder.font,
       fontSize: placeholder.fontSize,
       fill: placeholder.fill,
@@ -216,6 +234,7 @@ export const fabricService = {
 
       const textContent = status === 'Learner' ? "Dysgwyr\nLearner" : "Rhugl\nFluent";
       const textObj = new fabric.Textbox(textContent, {
+        controls: createTextBoxControls(),
         name: 'cymraeg-text',
         fontFamily: logoConfig.font,
         fill: logoConfig.fill,

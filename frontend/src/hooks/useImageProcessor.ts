@@ -7,16 +7,43 @@ interface FabricCanvasElement extends HTMLCanvasElement {
   __fabric?: fabric.Canvas;
 }
 
+export interface SelectedElementBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface InitialEditorState {
+  image: BackgroundImage | null;
+  textValues: Record<string, string>;
+  cymraegStatus: 'None' | 'Learner' | 'Fluent';
+}
+
+const getImageMetrics = (canvas: fabric.Canvas) => {
+  const background = canvas.backgroundImage;
+  const bounds = background?.getBoundingRect();
+  return {
+    left: bounds?.left ?? 0,
+    top: bounds?.top ?? 0,
+    scale: background && bounds && background.width ? bounds.width / background.width : 1,
+  };
+};
+
 export const useImageProcessor = (
-  canvasRef: React.RefObject<HTMLCanvasElement | null>
+  canvasRef: React.RefObject<HTMLCanvasElement | null>,
+  initialState?: InitialEditorState
 ) => {
+  const [restoredState] = useState(initialState);
   const fabricCanvas = useRef<fabric.Canvas | null>(null);
   const [selectedImage, setSelectedImage] = useState<BackgroundImage | null>(
     null
   );
   const [originalImageDimensions, setOriginalImageDimensions] = useState<{ width: number; height: number } | null>(null);
   const [imageLoadingError, setImageLoadingError] = useState<string | null>(null);
-  const [cymraegStatus, setCymraegStatus] = useState<'None' | 'Learner' | 'Fluent'>('None');
+  const [cymraegStatus, setCymraegStatus] = useState<'None' | 'Learner' | 'Fluent'>(restoredState?.cymraegStatus ?? 'None');
+  const lastSelectedObject = useRef<fabric.FabricObject | null>(null);
+  const [selectedElementBounds, setSelectedElementBounds] = useState<SelectedElementBounds | null>(null);
 
   // Callback to update layout and dimensions
   const updateCanvasDimensions = useCallback(() => {
@@ -58,6 +85,34 @@ export const useImageProcessor = (
 
       (canvasElement as FabricCanvasElement).__fabric = fabricCanvas.current;
 
+      const canvas = fabricCanvas.current;
+      const updateSelectedElementBounds = () => {
+        const selectedObject = canvas.getActiveObject() ?? lastSelectedObject.current;
+        if (!selectedObject) return;
+
+        lastSelectedObject.current = selectedObject;
+        selectedObject.setCoords();
+        const bounds = selectedObject.getBoundingRect();
+        const { left, top, scale } = getImageMetrics(canvas);
+        if (!scale) return;
+
+        const nextBounds = {
+          x: (bounds.left - left) / scale,
+          y: (bounds.top - top) / scale,
+          width: bounds.width / scale,
+          height: bounds.height / scale,
+        };
+        setSelectedElementBounds((previous) => (
+          previous?.x === nextBounds.x && previous.y === nextBounds.y
+            && previous.width === nextBounds.width && previous.height === nextBounds.height
+            ? previous
+            : nextBounds
+        ));
+      };
+      const unsubscribeSelectionCreated = canvas.on('selection:created', updateSelectedElementBounds);
+      const unsubscribeSelectionUpdated = canvas.on('selection:updated', updateSelectedElementBounds);
+      const unsubscribeRender = canvas.on('after:render', updateSelectedElementBounds);
+
       const resizeObserver = new ResizeObserver(() => {
         if (fabricCanvas.current && canvasElement) {
           requestAnimationFrame(() => {
@@ -74,6 +129,10 @@ export const useImageProcessor = (
       }
 
       return () => {
+        unsubscribeSelectionCreated();
+        unsubscribeSelectionUpdated();
+        unsubscribeRender();
+        lastSelectedObject.current = null;
         if (canvasElement) {
           delete (canvasElement as FabricCanvasElement).__fabric;
         }
@@ -82,6 +141,47 @@ export const useImageProcessor = (
       };
     }
   }, [canvasRef, updateCanvasDimensions]);
+
+  const updateSelectedElementBounds = (field: keyof SelectedElementBounds, value: number) => {
+    const canvas = fabricCanvas.current;
+    const object = canvas?.getActiveObject() ?? lastSelectedObject.current;
+    if (!canvas || !object || !Number.isFinite(value)) return;
+    if ((field === 'width' || field === 'height') && value <= 0) return;
+    if (canvas.getActiveObject() !== object && !canvas.getObjects().includes(object)) return;
+
+    object.setCoords();
+    const bounds = object.getBoundingRect();
+    const { left, top, scale } = getImageMetrics(canvas);
+    if (!scale || !bounds.width || !bounds.height) return;
+    const target = { ...bounds };
+    if (field === 'x') target.left = left + value * scale;
+    else if (field === 'y') target.top = top + value * scale;
+    else target[field] = value * scale;
+
+    if (field === 'width' || field === 'height') {
+      if (object.isType('Textbox')) {
+        const objectScale = Math.abs(field === 'width' ? object.scaleX : object.scaleY);
+        if (!objectScale) return;
+        const stroke = object.strokeUniform ? object.strokeWidth / objectScale : object.strokeWidth;
+        object.set(field, Math.max(0, target[field] / objectScale - stroke));
+      } else {
+        const ratio = target[field] / bounds[field];
+        const proportional = object.angle % 180 !== 0 || !!object.group;
+        object.set({
+          scaleX: object.scaleX * (field === 'width' || proportional ? ratio : 1),
+          scaleY: object.scaleY * (field === 'height' || proportional ? ratio : 1),
+        });
+      }
+    }
+    object.setCoords();
+    const resizedBounds = object.getBoundingRect();
+    object.setXY(object.getXY().add(new fabric.Point(
+      target.left - resizedBounds.left, target.top - resizedBounds.top
+    )));
+    object.setCoords();
+    lastSelectedObject.current = object;
+    canvas.requestRenderAll();
+  };
 
   const updateText = (id: string, text: string) => {
     if (!fabricCanvas.current || !selectedImage) return;
@@ -97,12 +197,18 @@ export const useImageProcessor = (
     await fabricService.updateLogoStatus(fabricCanvas.current, selectedImage.logoConfig, status);
   };
 
-  const selectImage = async (image: BackgroundImage, textValues: Record<string, string> = {}) => {
+  const loadImage = useCallback(async (
+    image: BackgroundImage,
+    textValues: Record<string, string>,
+    status: 'None' | 'Learner' | 'Fluent'
+  ) => {
     setSelectedImage(image);
     if (!fabricCanvas.current) return;
 
     try {
       setImageLoadingError(null);
+      lastSelectedObject.current = null;
+      setSelectedElementBounds(null);
       fabricCanvas.current.clear();
 
       const img = await fabric.FabricImage.fromURL(image.src, { crossOrigin: 'anonymous' });
@@ -122,8 +228,8 @@ export const useImageProcessor = (
       });
 
       // Re-add logo
-      if (cymraegStatus !== 'None' && image.logoConfig) {
-        await fabricService.addLogo(canvas, image.logoConfig, cymraegStatus);
+      if (status !== 'None' && image.logoConfig) {
+        await fabricService.addLogo(canvas, image.logoConfig, status);
       }
 
       updateCanvasDimensions();
@@ -132,7 +238,19 @@ export const useImageProcessor = (
       console.error('Error loading image:', error);
       setImageLoadingError(`Failed to load image: ${image.name}. Please try a different image.`);
     }
-  };
+  }, [updateCanvasDimensions]);
+
+  useEffect(() => {
+    if (!restoredState?.image) return;
+    const image = restoredState.image;
+    const frame = requestAnimationFrame(() => {
+      void loadImage(image, restoredState.textValues, restoredState.cymraegStatus);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [restoredState, loadImage]);
+
+  const selectImage = (image: BackgroundImage, textValues: Record<string, string> = {}) =>
+    loadImage(image, textValues, cymraegStatus);
 
   const downloadImage = async () => {
     if (!selectedImage || !originalImageDimensions || !fabricCanvas.current) {
@@ -179,5 +297,5 @@ export const useImageProcessor = (
     }
   };
 
-  return { selectImage, updateText, downloadImage, imageLoadingError, updateCymraegStatus, cymraegStatus };
+  return { selectImage, updateText, downloadImage, imageLoadingError, updateCymraegStatus, cymraegStatus, selectedElementBounds, updateSelectedElementBounds };
 };
